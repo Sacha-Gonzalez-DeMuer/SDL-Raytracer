@@ -3,6 +3,7 @@
 #include <fstream>
 #include "Math.h"
 #include "DataTypes.h"
+#include <iostream>
 
 namespace dae
 {
@@ -13,8 +14,48 @@ namespace dae
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W1
-			assert(false && "No Implemented Yet!");
-			return false;
+
+			//setup quadric equation from combined formula of ray and sphere
+			//-> t^2 (rayDir * rayDir) + t(2rayDir * (originRay - originSphere)) + ((originRay - originSphere) * (originRay - originSphere)) - radius^2 = 0
+			float A = Vector3::Dot(ray.direction, ray.direction);
+			float B = Vector3::Dot(2 * ray.direction, (ray.origin - sphere.origin));
+			float C = Vector3::Dot((ray.origin - sphere.origin), (ray.origin - sphere.origin)) - (sphere.radius * sphere.radius);
+
+			float discriminant{ (B * B) - (4 * A * C) };
+
+			if (discriminant > 0) //full intersection
+			{
+				if (discriminant > ray.min && discriminant <= ray.max)
+				{
+					float tPlus = (-B + std::sqrtf(discriminant)) / (2 * A);
+					float tMinus = (-B - std::sqrtf(discriminant)) / (2 * A);
+
+					tMinus < ray.min
+						? hitRecord.t = tPlus
+						: hitRecord.t = tMinus;
+
+					hitRecord.origin = ray.origin + (hitRecord.t * ray.direction);
+					hitRecord.materialIndex = sphere.materialIndex;
+					hitRecord.didHit = true;
+					return true;
+				}
+			}
+			else
+			{
+				return false;
+			}
+
+
+			/*Vector3 vecToCenter{ sphere.origin - ray.origin };
+			Vector3 projectedCenter{ Vector3::Dot(vecToCenter, ray.direction) * ray.direction.Normalized() }; 
+
+			float centerToProjSqrtMagnitude = (sphere.origin - projectedCenter).SqrMagnitude();
+
+			float projToIntersectionMagnitude =  std::sqrtf(sphere.radius * sphere.radius - centerToProjSqrtMagnitude);
+
+			Vector3 intersection = ray.direction * (projectedCenter.Magnitude() - projToIntersectionMagnitude);*/
+
+			return false ;
 		}
 
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray)
@@ -28,8 +69,24 @@ namespace dae
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W1
-			assert(false && "No Implemented Yet!");
-			return false;
+			float t{};
+			t = Vector3::Dot((plane.origin - ray.origin), plane.normal) / Vector3::Dot(ray.direction, plane.normal);
+
+			if (t > ray.min && t <= ray.max)
+			{
+				hitRecord.didHit = true;
+				hitRecord.materialIndex = plane.materialIndex;
+				hitRecord.normal = plane.normal;
+
+				hitRecord.origin = ray.origin + ray.direction * t;
+				hitRecord.t = t;
+				
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray)

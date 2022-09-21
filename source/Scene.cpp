@@ -2,6 +2,8 @@
 #include "Utils.h"
 #include "Material.h"
 
+#include <iostream>
+
 namespace dae {
 
 #pragma region Base Scene
@@ -29,7 +31,25 @@ namespace dae {
 	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) const
 	{
 		//todo W1
-		assert(false && "No Implemented Yet!");
+		HitRecord testHit{};
+		testHit.t = FLT_MAX;
+		for (unsigned int i = 0; i < m_SphereGeometries.size(); i++)
+		{
+			GeometryUtils::HitTest_Sphere(m_SphereGeometries[i], ray, testHit);
+			if (testHit.t < closestHit.t)
+			{
+				closestHit = testHit;
+			}
+		}
+
+		for (unsigned int i = 0; i < m_PlaneGeometries.size(); i++)
+		{
+			GeometryUtils::HitTest_Plane(m_PlaneGeometries[i], ray, testHit);
+			if (testHit.t < closestHit.t)
+			{
+				closestHit = testHit;
+			}
+		}
 	}
 
 	bool Scene::DoesHit(const Ray& ray) const
@@ -125,6 +145,10 @@ namespace dae {
 		AddPlane({ 0.f, -75.f, 0.f }, { 0.f, 1.f,0.f }, matId_Solid_Yellow);
 		AddPlane({ 0.f, 75.f, 0.f }, { 0.f, -1.f,0.f }, matId_Solid_Yellow);
 		AddPlane({ 0.f, 0.f, 125.f }, { 0.f, 0.f,-1.f }, matId_Solid_Magenta);
+
+		Vector3 a{ 1,0,0 };
+		Vector3 b{ 0,1,0 };
+
 	}
 #pragma endregion
 }

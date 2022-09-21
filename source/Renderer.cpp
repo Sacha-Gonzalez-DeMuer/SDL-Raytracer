@@ -10,6 +10,8 @@
 #include "Scene.h"
 #include "Utils.h"
 
+#include <iostream>
+
 using namespace dae;
 
 Renderer::Renderer(SDL_Window * pWindow) :
@@ -31,11 +33,25 @@ void Renderer::Render(Scene* pScene) const
 	{
 		for (int py{}; py < m_Height; ++py)
 		{
-			float gradient = px / static_cast<float>(m_Width);
-			gradient += py / static_cast<float>(m_Width);
-			gradient /= 2.0f;
+			float aspectRatio{ float(m_Width) / m_Height };
+			Vector3 rayDirection{ 0,0, 1 };
 
-			ColorRGB finalColor{ gradient, gradient, gradient };
+			rayDirection.x = ((2.0f * (px + 0.5f) / float(m_Width)) - 1) * aspectRatio;
+			rayDirection.y = 1 - (2.0f * (py + 0.5f) / float(m_Height));
+
+			rayDirection.Normalize();
+			
+			Ray viewRay{ {0,0,0}, rayDirection };
+			ColorRGB finalColor{};
+			HitRecord closestHit{};
+
+			pScene->GetClosestHit(viewRay, closestHit);
+
+			if (closestHit.didHit)
+			{
+				finalColor = materials[closestHit.materialIndex]->Shade();
+			}
+			
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();
@@ -56,3 +72,4 @@ bool Renderer::SaveBufferToImage() const
 {
 	return SDL_SaveBMP(m_pBuffer, "RayTracing_Buffer.bmp");
 }
+
