@@ -14,9 +14,39 @@ namespace dae
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W1
+			hitRecord.didHit = false;
 
 			//setup quadric equation from combined formula of ray and sphere
 			//-> t^2 (rayDir * rayDir) + t(2rayDir * (originRay - originSphere)) + ((originRay - originSphere) * (originRay - originSphere)) - radius^2 = 0
+			/*float A = Vector3::Dot(ray.direction, ray.direction);
+			float B = Vector3::Dot(2 * ray.direction, (ray.origin - sphere.origin));
+			float C = Vector3::Dot((ray.origin - sphere.origin), (ray.origin - sphere.origin)) - (sphere.radius * sphere.radius);
+
+			float discriminant{ (B * B) - (4 * A * C) };
+		
+			if (discriminant < 0)
+			{
+				return false;
+			}
+
+			float sqrtDiscriminant{ std::sqrtf(discriminant) };
+			float t = (-B - sqrtDiscriminant) / (2 * A);
+			if (t < ray.min)
+			{
+				t = (-B + sqrtDiscriminant) / (2 * A);
+			}
+			if (t >= ray.min && t <= ray.max)
+			{
+				hitRecord.t = t;
+				hitRecord.origin = ray.origin + (hitRecord.t * ray.direction);
+				hitRecord.materialIndex = sphere.materialIndex;
+				hitRecord.didHit = true;
+				hitRecord.normal = hitRecord.origin - ray.origin;
+				return true;
+			}
+	
+			return false;
+			
 			float A = Vector3::Dot(ray.direction, ray.direction);
 			float B = Vector3::Dot(2 * ray.direction, (ray.origin - sphere.origin));
 			float C = Vector3::Dot((ray.origin - sphere.origin), (ray.origin - sphere.origin)) - (sphere.radius * sphere.radius);
@@ -37,25 +67,46 @@ namespace dae
 					hitRecord.origin = ray.origin + (hitRecord.t * ray.direction);
 					hitRecord.materialIndex = sphere.materialIndex;
 					hitRecord.didHit = true;
+					hitRecord.normal = hitRecord.origin - ray.origin;
 					return true;
 				}
 			}
 			else
 			{
 				return false;
-			}
+			}*/
 
+			
+            float A = Vector3::Dot(ray.direction, ray.direction);
+            float B = Vector3::Dot(2 * ray.direction, (ray.origin - sphere.origin));
+            float C = Vector3::Dot((ray.origin - sphere.origin), (ray.origin - sphere.origin)) - (sphere.radius * sphere.radius);
 
-			/*Vector3 vecToCenter{ sphere.origin - ray.origin };
-			Vector3 projectedCenter{ Vector3::Dot(vecToCenter, ray.direction) * ray.direction.Normalized() }; 
+            float discriminant{ (B * B) - (4 * A * C) };
 
-			float centerToProjSqrtMagnitude = (sphere.origin - projectedCenter).SqrMagnitude();
+            if (discriminant < 0) return false;
 
-			float projToIntersectionMagnitude =  std::sqrtf(sphere.radius * sphere.radius - centerToProjSqrtMagnitude);
+            float sqrtDiscriminant = std::sqrtf(discriminant);
+            float t = (-B - sqrtDiscriminant) / (2 * A);
 
-			Vector3 intersection = ray.direction * (projectedCenter.Magnitude() - projToIntersectionMagnitude);*/
+            if (t < ray.min)
+            {
+                t = (-B + sqrtDiscriminant) / (2 * A);
+            }
 
-			return false ;
+            if (t >= ray.min && t <= ray.max)
+            {
+                if (ignoreHitRecord) return true;
+
+                hitRecord.didHit = true;
+                hitRecord.materialIndex = sphere.materialIndex;
+                hitRecord.t = t;
+                hitRecord.origin = ray.origin + (hitRecord.t * ray.direction);
+                hitRecord.normal = ray.origin - hitRecord.origin ;
+                
+                return true;
+            }
+
+            return false;
 		}
 
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray)
@@ -132,8 +183,7 @@ namespace dae
 		inline Vector3 GetDirectionToLight(const Light& light, const Vector3 origin)
 		{
 			//todo W3
-			assert(false && "No Implemented Yet!");
-			return {};
+			return light.origin - origin;
 		}
 
 		inline ColorRGB GetRadiance(const Light& light, const Vector3& target)

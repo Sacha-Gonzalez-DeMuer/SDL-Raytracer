@@ -5,6 +5,7 @@
 
 #include "Math.h"
 #include "Timer.h"
+#include <iostream>
 
 namespace dae
 {
@@ -26,6 +27,8 @@ namespace dae
 		Vector3 up{Vector3::UnitY};
 		Vector3 right{Vector3::UnitX};
 
+		const float moveSpeed{ 1.f };
+
 		float totalPitch{0.f};
 		float totalYaw{0.f};
 
@@ -35,40 +38,50 @@ namespace dae
 		Matrix CalculateCameraToWorld()
 		{
 			//todo: W2
-			Vector3 rightOBN{ Vector3::Cross(forward, up).Normalized() };
-			Vector3 upOBN{ Vector3::Cross(rightOBN, forward).Normalized() };
-
-
-			/*Matrix Yaw{
-				{cos(totalYaw), 0, -sin(totalYaw), 0},
-				{0,1,0,0},
-				{sin(totalYaw), 0, cos(totalYaw), 0},
-				{0,0,0,1} };
-
-			Matrix Pitch{
-				{1, 0, 0, 0},
-				{0, cos(totalPitch), -sin(totalPitch), 0},
-				{0, sin(totalPitch), cos(totalPitch), 0},
-				{0,0,0,1}
-			};*/
+			 right =  Vector3::Cross(Vector3::UnitY,forward ).Normalized() ;
+			 up = Vector3::Cross(forward, right).Normalized() ;
 			
-			return Matrix{{rightOBN, 0}, {upOBN, 0}, {forward, 0}, {origin, 1}};
+			return Matrix{{right}, {up}, {forward}, {origin}};
 		}
 
 		void Update(Timer* pTimer)
 		{
 			const float deltaTime = pTimer->GetElapsed();
+			const float constSpeed{ moveSpeed * deltaTime };
 
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
-
+			origin += (pKeyboardState[SDL_SCANCODE_W] + -pKeyboardState[SDL_SCANCODE_S]) * constSpeed * forward;
+			origin += (-pKeyboardState[SDL_SCANCODE_A] + pKeyboardState[SDL_SCANCODE_D]) * constSpeed * right;
 
 			//Mouse Input
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			//todo: W2
-			//assert(false && "Not Implemented Yet");
+			if (mouseState & SDL_BUTTON(1))
+			{
+				if (mouseState & SDL_BUTTON(3))
+				{
+					origin -= mouseY * constSpeed * forward;
+					origin += mouseX * constSpeed * right;
+				}
+				else
+				{
+					origin += mouseY * constSpeed * forward;
+					totalYaw += mouseX * constSpeed;
+				}
+			}
+
+
+			if (mouseState & SDL_BUTTON(3))
+			{
+				totalPitch -= mouseY * constSpeed;
+				totalYaw += mouseX * constSpeed;
+			}
+
+
+			Matrix finalRotation{ Matrix::CreateRotation(totalPitch, totalYaw, 0) };
+			forward = finalRotation.TransformVector(Vector3::UnitZ).Normalized();
 		}
 	};
 }
