@@ -1,7 +1,7 @@
 #pragma once
 #include <cassert>
 #include "Math.h"
-
+#include <iostream>
 namespace dae
 {
 	namespace BRDF
@@ -14,15 +14,12 @@ namespace dae
 		static ColorRGB Lambert(float kd, const ColorRGB& cd)
 		{
 			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			return (cd * kd) / PI;
 		}
 
 		static ColorRGB Lambert(const ColorRGB& kd, const ColorRGB& cd)
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			return  (cd * kd) / PI;
 		}
 
 		/**
@@ -36,9 +33,14 @@ namespace dae
 		 */
 		static ColorRGB Phong(float ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			const Vector3 reflect{ l - (2 * (Vector3::Dot(n, l) ) ) *  n };
+			float cosAngle{ Vector3::Dot(reflect, v) };
+			if (cosAngle < 0) cosAngle = 0;
+			const float specular{ ks * std::powf(cosAngle, exp) };
+
+
+
+			return { specular, specular, specular };
 		}
 
 		/**
@@ -50,13 +52,14 @@ namespace dae
 		 */
 		static ColorRGB FresnelFunction_Schlick(const Vector3& h, const Vector3& v, const ColorRGB& f0)
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			float angle{ (Vector3::Dot(h, v)) };
+			if (angle < 0) angle = 0;
+			
+			return f0 + (ColorRGB{ 1,1,1 } - f0) * (std::powf(1 - angle, 5));
 		}
 
 		/**
-		 * \brief BRDF NormalDistribution >> Trowbridge-Reitz GGX (UE4 implemetation - squared(roughness))
+		 * \brief BRDF NormalDistribution >> Trowbridge-Reitz GGX (UE4 implemetation								- squared(roughness))
 		 * \param n Surface normal
 		 * \param h Normalized half vector
 		 * \param roughness Roughness of the material
@@ -64,9 +67,12 @@ namespace dae
 		 */
 		static float NormalDistribution_GGX(const Vector3& n, const Vector3& h, float roughness)
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			const float sqrtRoughness{ roughness * roughness };
+			const float angle{ Vector3::Dot(n, h) };
+			const float sqrtAngle{ angle * angle };
+
+			return (sqrtRoughness) / 
+				(PI * std::powf(( sqrtAngle * (sqrtRoughness - 1) + 1),2));
 		}
 
 
@@ -79,9 +85,13 @@ namespace dae
 		 */
 		static float GeometryFunction_SchlickGGX(const Vector3& n, const Vector3& v, float roughness)
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			float angle{ Vector3::Dot(n, v) };
+			if (angle < 0) angle = 0;
+			const float k{
+				((roughness + 1) * (roughness + 1))
+				/ 8.0f };
+
+			return { angle / (angle * (1-k) + k) };
 		}
 
 		/**
@@ -94,9 +104,12 @@ namespace dae
 		 */
 		static float GeometryFunction_Smith(const Vector3& n, const Vector3& v, const Vector3& l, float roughness)
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			float schlickView{ GeometryFunction_SchlickGGX(n, v, roughness) };
+			float schlickLight{  GeometryFunction_SchlickGGX(n, l, roughness) };
+			float smith{ schlickView * schlickLight };
+			//if (smith < 0) smith = 0;
+
+			return smith;
 		}
 
 	}

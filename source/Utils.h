@@ -16,66 +16,6 @@ namespace dae
 			//todo W1
 			hitRecord.didHit = false;
 
-			//setup quadric equation from combined formula of ray and sphere
-			//-> t^2 (rayDir * rayDir) + t(2rayDir * (originRay - originSphere)) + ((originRay - originSphere) * (originRay - originSphere)) - radius^2 = 0
-			/*float A = Vector3::Dot(ray.direction, ray.direction);
-			float B = Vector3::Dot(2 * ray.direction, (ray.origin - sphere.origin));
-			float C = Vector3::Dot((ray.origin - sphere.origin), (ray.origin - sphere.origin)) - (sphere.radius * sphere.radius);
-
-			float discriminant{ (B * B) - (4 * A * C) };
-		
-			if (discriminant < 0)
-			{
-				return false;
-			}
-
-			float sqrtDiscriminant{ std::sqrtf(discriminant) };
-			float t = (-B - sqrtDiscriminant) / (2 * A);
-			if (t < ray.min)
-			{
-				t = (-B + sqrtDiscriminant) / (2 * A);
-			}
-			if (t >= ray.min && t <= ray.max)
-			{
-				hitRecord.t = t;
-				hitRecord.origin = ray.origin + (hitRecord.t * ray.direction);
-				hitRecord.materialIndex = sphere.materialIndex;
-				hitRecord.didHit = true;
-				hitRecord.normal = hitRecord.origin - ray.origin;
-				return true;
-			}
-	
-			return false;
-			
-			float A = Vector3::Dot(ray.direction, ray.direction);
-			float B = Vector3::Dot(2 * ray.direction, (ray.origin - sphere.origin));
-			float C = Vector3::Dot((ray.origin - sphere.origin), (ray.origin - sphere.origin)) - (sphere.radius * sphere.radius);
-
-			float discriminant{ (B * B) - (4 * A * C) };
-
-			if (discriminant > 0) //full intersection
-			{
-				if (discriminant > ray.min && discriminant <= ray.max)
-				{
-					float tPlus = (-B + std::sqrtf(discriminant)) / (2 * A);
-					float tMinus = (-B - std::sqrtf(discriminant)) / (2 * A);
-
-					tMinus < ray.min
-						? hitRecord.t = tPlus
-						: hitRecord.t = tMinus;
-
-					hitRecord.origin = ray.origin + (hitRecord.t * ray.direction);
-					hitRecord.materialIndex = sphere.materialIndex;
-					hitRecord.didHit = true;
-					hitRecord.normal = hitRecord.origin - ray.origin;
-					return true;
-				}
-			}
-			else
-			{
-				return false;
-			}*/
-
 			
             float A = Vector3::Dot(ray.direction, ray.direction);
             float B = Vector3::Dot(2 * ray.direction, (ray.origin - sphere.origin));
@@ -101,8 +41,8 @@ namespace dae
                 hitRecord.materialIndex = sphere.materialIndex;
                 hitRecord.t = t;
                 hitRecord.origin = ray.origin + (hitRecord.t * ray.direction);
-                hitRecord.normal = ray.origin - hitRecord.origin ;
-                
+				hitRecord.normal = (hitRecord.origin - sphere.origin).Normalized();
+
                 return true;
             }
 
@@ -119,9 +59,7 @@ namespace dae
 		//PLANE HIT-TESTS
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W1
-			float t{};
-			t = Vector3::Dot((plane.origin - ray.origin), plane.normal) / Vector3::Dot(ray.direction, plane.normal);
+			const float t{ Vector3::Dot((plane.origin - ray.origin), plane.normal) / Vector3::Dot(ray.direction, plane.normal) };
 
 			if (t > ray.min && t <= ray.max)
 			{
@@ -188,9 +126,13 @@ namespace dae
 
 		inline ColorRGB GetRadiance(const Light& light, const Vector3& target)
 		{
+			ColorRGB c{};
 			//todo W3
-			assert(false && "No Implemented Yet!");
-			return {};
+
+			float radiantIntensity = light.intensity * (4 * PI);
+			float irradiance = radiantIntensity / (4 * PI * (light.origin - target).SqrMagnitude());
+
+			return light.color * irradiance;
 		}
 	}
 

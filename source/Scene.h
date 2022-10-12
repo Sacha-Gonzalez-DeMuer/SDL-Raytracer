@@ -84,10 +84,24 @@ namespace dae
 		Scene_W2() = default;
 		~Scene_W2() override = default;
 
-		Scene_W2(const Scene_W1&) = delete;
-		Scene_W2(Scene_W1&&) noexcept = delete;
+		Scene_W2(const Scene_W2&) = delete;
+		Scene_W2(Scene_W2&&) noexcept = delete;
 		Scene_W2& operator=(const Scene_W1&) = delete;
 		Scene_W2& operator=(Scene_W1&&) noexcept = delete;
+
+		void Initialize() override;
+	};
+
+	class Scene_W3 : public Scene
+	{
+	public:
+		Scene_W3() = default;
+		~Scene_W3() override = default;
+
+		Scene_W3(const Scene_W3&) = delete;
+		Scene_W3(Scene_W3&&) noexcept = delete;
+		Scene_W3& operator=(const Scene_W3&) = delete;
+		Scene_W3& operator=(Scene_W3&&) noexcept = delete;
 
 		void Initialize() override;
 	};

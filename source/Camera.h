@@ -21,7 +21,7 @@ namespace dae
 
 
 		Vector3 origin{};
-		float fovAngle{90.f};
+		float fovAngle{60.f};
 
 		Vector3 forward{.266f, -.453f, .860f};
 		Vector3 up{Vector3::UnitY};
@@ -37,7 +37,6 @@ namespace dae
 
 		Matrix CalculateCameraToWorld()
 		{
-			//todo: W2
 			 right =  Vector3::Cross(Vector3::UnitY,forward ).Normalized() ;
 			 up = Vector3::Cross(forward, right).Normalized() ;
 			
