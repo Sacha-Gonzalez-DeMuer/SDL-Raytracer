@@ -13,7 +13,6 @@ namespace dae
 		//SPHERE HIT-TESTS
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W1
 			hitRecord.didHit = false;
 
 			
@@ -88,9 +87,46 @@ namespace dae
 		//TRIANGLE HIT-TESTS
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W5
-			assert(false && "No Implemented Yet!");
-			return false;
+			Vector3 a = triangle.v1 - triangle.v0;
+			Vector3 b = triangle.v2 - triangle.v0;
+			Vector3 edges[3] = { a, b, triangle.v2 - triangle.v1 };
+			Vector3 vertices[3] = { triangle.v0, triangle.v1, triangle.v2 };
+			Vector3 n = Vector3::Cross(a, b);
+
+
+			if (Vector3::Dot(ray.direction, n) == 0) return false; //perpendicular to viewray
+			if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && Vector3::Dot(ray.direction, n) < 0) return false;
+			if (triangle.cullMode == TriangleCullMode::BackFaceCulling && Vector3::Dot(ray.direction, n) > 0) return false;
+
+
+			Vector3 center = (triangle.v0 + triangle.v1 + triangle.v2) / 3;
+			Vector3 L = center - ray.origin;
+			float t = Vector3::Dot(L, n) / Vector3::Dot(ray.direction, n);
+
+			if (t < ray.min || t > ray.max) return false;
+
+			const Vector3 hitPoint{ ray.origin + t * ray.direction };
+
+
+			for (int i = 0; i < 3; ++i)
+			{
+				Vector3 pointToSide = hitPoint - vertices[i];
+				//Vector3 check{ Vector3::Cross(edges[i], c) };
+				if (Vector3::Dot(n, Vector3::Cross(edges[i], pointToSide)) < 0) return false;
+			}
+
+			//
+
+
+			if (ignoreHitRecord) return true;
+
+			hitRecord.didHit = true;
+			hitRecord.materialIndex = triangle.materialIndex;
+			hitRecord.normal = n;
+			hitRecord.origin = ray.origin + ray.direction * t;
+			hitRecord.t = t;
+
+			return true;
 		}
 
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray)
@@ -103,7 +139,6 @@ namespace dae
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W5
-			assert(false && "No Implemented Yet!");
 			return false;
 		}
 

@@ -123,8 +123,26 @@ namespace dae
 
 		void CalculateNormals()
 		{
-			assert(false && "No Implemented Yet!");
+			//find vertrex triplets
+
+			Triangle triangle{};
+
+
+			for (int i = 0; i < indices.size(); ++i)
+			{
+				triangle.v0 = positions[indices[i]];
+				triangle.v1 = positions[indices[++i]];
+				triangle.v2 = positions[indices[++i]];
+
+				const Vector3 edge1{ triangle.v1 - triangle.v0 };
+				const Vector3 edge2{ triangle.v2 - triangle.v0 };
+				normals.push_back(Vector3::Cross(edge1, edge2));
+
+			}
+
+			
 		}
+
 
 		void UpdateTransforms()
 		{
