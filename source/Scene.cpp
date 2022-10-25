@@ -51,15 +51,6 @@ namespace dae {
 			}
 		}
 
-		for (unsigned int i = 0; i < m_Triangles.size(); ++i)
-		{
-			GeometryUtils::HitTest_Triangle(m_Triangles[i], ray, testHit);
-			if (testHit.t < closestHit.t)
-			{
-				closestHit = testHit;
-			}
-		}
-
 		for (unsigned int i = 0; i < m_TriangleMeshGeometries.size(); ++i)
 		{
 			GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[i], ray, testHit);
@@ -84,12 +75,6 @@ namespace dae {
 		for (unsigned int i = 0; i < m_PlaneGeometries.size(); i++)
 		{
 			GeometryUtils::HitTest_Plane(m_PlaneGeometries[i], ray, testHit);
-			if (testHit.didHit) return true;
-		}
-
-		for (unsigned int i = 0; i < m_Triangles.size(); i++)
-		{
-			GeometryUtils::HitTest_Triangle(m_Triangles[i], ray, testHit);
 			if (testHit.didHit) return true;
 		}
 
@@ -299,10 +284,11 @@ namespace dae {
 		m_Triangles.emplace_back(triangle);*/
 
 		const auto triangleMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
-		triangleMesh->positions = { {-.75f, -1.f, .0f}, {-.75, 1.f, .0f}, {.75f, 1.f, 1.f}, {.75, -1.f, 0.f} };
+		triangleMesh->positions = { {-0.75, -1.f, 0.f},{-.75f, 1.f, 0.f}, {.75f, 1.f, 1.f}, {.75f, -1.f, 0.f} };
 		triangleMesh->indices = {
-		0,1,2, //triangle1
-		0,2,3 //triangle2
+			0,1,2, //Triangle 1
+			0,2,3 //Triangle 2
+
 		};
 
 		triangleMesh->CalculateNormals();

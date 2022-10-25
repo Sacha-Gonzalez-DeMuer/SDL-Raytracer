@@ -89,31 +89,31 @@ namespace dae
 		{
 			Vector3 a = triangle.v1 - triangle.v0;
 			Vector3 b = triangle.v2 - triangle.v0;
-			Vector3 edges[3] = { a, b, triangle.v2 - triangle.v1 };
-			Vector3 vertices[3] = { triangle.v0, triangle.v1, triangle.v2 };
 			Vector3 n = Vector3::Cross(a, b);
 
-
+			//culling
 			if (Vector3::Dot(ray.direction, n) == 0) return false; //perpendicular to viewray
 			if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && Vector3::Dot(ray.direction, n) < 0) return false;
 			if (triangle.cullMode == TriangleCullMode::BackFaceCulling && Vector3::Dot(ray.direction, n) > 0) return false;
 
-
+			//find hit point
 			Vector3 center = (triangle.v0 + triangle.v1 + triangle.v2) / 3;
 			Vector3 L = center - ray.origin;
 			float t = Vector3::Dot(L, n) / Vector3::Dot(ray.direction, n);
-
 			if (t < ray.min || t > ray.max) return false;
-
 			const Vector3 hitPoint{ ray.origin + t * ray.direction };
 
 
+			//check if hit point is outside triangle
+			Vector3 edges[3] = { a, 
+				triangle.v2 - triangle.v1, 
+				triangle.v0 - triangle.v2 };
+			Vector3 vertices[3] = { triangle.v0, triangle.v1, triangle.v2 };
 			for (int i = 0; i < 3; ++i)
 			{
 				Vector3 pointToSide = hitPoint - vertices[i];
 				if (Vector3::Dot(n, Vector3::Cross(edges[i], pointToSide)) < 0) return false;
 			}
-
 
 			if (ignoreHitRecord) return true;
 
@@ -135,24 +135,37 @@ namespace dae
 #pragma region TriangeMesh HitTest
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
+
 			Triangle t{};
-			for (uint32_t i = 0; i < mesh.indices.size(); i +=3)
+			HitRecord tmp{};
+			int normalIndex{ 0 };
+
+			for (uint32_t i = 0; i < mesh.indices.size(); i += 3)
 			{
 				t.v0 = mesh.transformedPositions[mesh.indices[i]];
-				t.v1 = mesh.transformedPositions[mesh.indices[i+1]];
-				t.v2 = mesh.transformedPositions[mesh.indices[i+2]];
+				t.v1 = mesh.transformedPositions[mesh.indices[i + 1]];
+				t.v2 = mesh.transformedPositions[mesh.indices[i + 2]];
 
-				t.normal = mesh.transformedNormals[i];
+				t.normal = mesh.transformedNormals[normalIndex++];
 				t.cullMode = mesh.cullMode;
 				t.materialIndex = mesh.materialIndex;
 
 
-				if(HitTest_Triangle(t, ray, hitRecord, ignoreHitRecord))
+				if (GeometryUtils::HitTest_Triangle(t, ray, tmp, ignoreHitRecord))
 				{
-					return true;
+					if (ignoreHitRecord) return true;
+					else
+					{
+						if (tmp.t < hitRecord.t)
+						{
+							hitRecord = tmp;
+							hitRecord.normal = Vector3::Cross(t.v1 - t.v0, t.v2 - t.v0);
+						}
+					}
 				}
 			}
-			return false;
+
+			return hitRecord.didHit;
 		}
 
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
