@@ -111,11 +111,8 @@ namespace dae
 			for (int i = 0; i < 3; ++i)
 			{
 				Vector3 pointToSide = hitPoint - vertices[i];
-				//Vector3 check{ Vector3::Cross(edges[i], c) };
 				if (Vector3::Dot(n, Vector3::Cross(edges[i], pointToSide)) < 0) return false;
 			}
-
-			//
 
 
 			if (ignoreHitRecord) return true;
@@ -138,7 +135,23 @@ namespace dae
 #pragma region TriangeMesh HitTest
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W5
+			Triangle t{};
+			for (uint32_t i = 0; i < mesh.indices.size(); i +=3)
+			{
+				t.v0 = mesh.transformedPositions[mesh.indices[i]];
+				t.v1 = mesh.transformedPositions[mesh.indices[i+1]];
+				t.v2 = mesh.transformedPositions[mesh.indices[i+2]];
+
+				t.normal = mesh.transformedNormals[i];
+				t.cullMode = mesh.cullMode;
+				t.materialIndex = mesh.materialIndex;
+
+
+				if(HitTest_Triangle(t, ray, hitRecord, ignoreHitRecord))
+				{
+					return true;
+				}
+			}
 			return false;
 		}
 

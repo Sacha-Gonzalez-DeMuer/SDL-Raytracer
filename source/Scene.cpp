@@ -59,6 +59,15 @@ namespace dae {
 				closestHit = testHit;
 			}
 		}
+
+		for (unsigned int i = 0; i < m_TriangleMeshGeometries.size(); ++i)
+		{
+			GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[i], ray, testHit);
+			if (testHit.t < closestHit.t)
+			{
+				closestHit = testHit;
+			}
+		}
 	}
 
 	bool Scene::DoesHit(const Ray& ray) const
@@ -81,6 +90,12 @@ namespace dae {
 		for (unsigned int i = 0; i < m_Triangles.size(); i++)
 		{
 			GeometryUtils::HitTest_Triangle(m_Triangles[i], ray, testHit);
+			if (testHit.didHit) return true;
+		}
+
+		for (unsigned int i = 0; i < m_TriangleMeshGeometries.size(); i++)
+		{
+			GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[i], ray, testHit);
 			if (testHit.didHit) return true;
 		}
 
@@ -277,11 +292,21 @@ namespace dae {
 
 
 		//Triangle (Temp)
-		auto triangle = Triangle{ {-.75, .5f, 0.f},  {-0.75f, 2.0f, 0.f}, {.75f, .5f, 0.f} };
+	/*	auto triangle = Triangle{ {-.75, .5f, 0.f},  {-0.75f, 2.0f, 0.f}, {.75f, .5f, 0.f} };
 		triangle.cullMode = TriangleCullMode::NoCulling;
 		triangle.materialIndex = matLambert_White;
 
-		m_Triangles.emplace_back(triangle);
+		m_Triangles.emplace_back(triangle);*/
+
+		const auto triangleMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
+		triangleMesh->positions = { {-.75f, -1.f, .0f}, {-.75, 1.f, .0f}, {.75f, 1.f, 1.f}, {.75, -1.f, 0.f} };
+		triangleMesh->indices = {
+		0,1,2, //triangle1
+		0,2,3 //triangle2
+		};
+
+		triangleMesh->CalculateNormals();
+		triangleMesh->UpdateTransforms();
 
 		//Light
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, 0.61f, .45f });//backLight

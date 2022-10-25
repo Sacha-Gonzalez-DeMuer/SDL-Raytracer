@@ -128,16 +128,26 @@ namespace dae
 			Triangle triangle{};
 
 
-			for (int i = 0; i < indices.size(); ++i)
+			for (int i = 0; i < indices.size(); i += 3)
 			{
 				triangle.v0 = positions[indices[i]];
-				triangle.v1 = positions[indices[++i]];
-				triangle.v2 = positions[indices[++i]];
+				triangle.v1 = positions[indices[i+1]];
+				triangle.v2 = positions[indices[i+2]];
+
+				//uint32_t v0 = indices[i];
+				//uint32_t v1 = indices[++i];
+				//uint32_t v2 = indices[++i];
+				//
+				//triangle.v0 = positions[v0];
+				//triangle.v1 = positions[v1];
+				//triangle.v2 = positions[v2];
+
+
+
 
 				const Vector3 edge1{ triangle.v1 - triangle.v0 };
 				const Vector3 edge2{ triangle.v2 - triangle.v0 };
 				normals.push_back(Vector3::Cross(edge1, edge2));
-
 			}
 
 			
@@ -146,15 +156,28 @@ namespace dae
 
 		void UpdateTransforms()
 		{
-			assert(false && "No Implemented Yet!");
 			//Calculate Final Transform 
-			//const auto finalTransform = ...
+			const auto finalTransform = scaleTransform * rotationTransform * translationTransform;
+
+			transformedPositions.reserve(positions.size());
+			transformedNormals.reserve(normals.size());
+
+
 
 			//Transform Positions (positions > transformedPositions)
 			//...
+			for (unsigned int i = 0; i < positions.size(); ++i)
+			{
+				transformedPositions[i] = finalTransform.TransformVector(positions[i]);
+			}
+
 
 			//Transform Normals (normals > transformedNormals)
 			//...
+			for (unsigned int i = 0; i < normals.size(); ++i)
+			{
+				transformedNormals[i] = finalTransform.TransformVector(normals[i]);
+			}
 		}
 	};
 #pragma endregion
