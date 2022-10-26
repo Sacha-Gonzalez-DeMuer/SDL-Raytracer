@@ -62,8 +62,7 @@ namespace dae
 		unsigned char AddMaterial(Material* pMaterial);
 	};
 
-	//+++++++++++++++++++++++++++++++++++++++++
-	//WEEK 1 Test Scene
+
 	class Scene_W1 final : public Scene
 	{
 	public:
@@ -117,7 +116,32 @@ namespace dae
 		Scene_W4& operator=(const Scene_W4&) = delete;
 		Scene_W4& operator=(Scene_W4&&) noexcept = delete;
 
-		void Initialize() override;
 
+
+		void Initialize() override;
+		void Update(Timer* pTimer) override;
+
+	private:
+		TriangleMesh* pMesh{ nullptr };
+	};
+
+	class Scene_W4_ReferenceScene : public Scene 
+	{
+	public:
+		Scene_W4_ReferenceScene() = default;
+		~Scene_W4_ReferenceScene() override = default;
+
+		Scene_W4_ReferenceScene(const Scene_W4_ReferenceScene&) = delete;
+		Scene_W4_ReferenceScene(Scene_W4_ReferenceScene&&) noexcept = delete;
+		Scene_W4_ReferenceScene& operator=(const Scene_W4_ReferenceScene&) = delete;
+		Scene_W4_ReferenceScene& operator=(Scene_W4_ReferenceScene&&) noexcept = delete;
+
+
+
+		void Initialize() override;
+		void Update(Timer* pTimer) override;
+
+	private:
+		TriangleMesh* m_pMeshes[3]{nullptr};
 	};
 }

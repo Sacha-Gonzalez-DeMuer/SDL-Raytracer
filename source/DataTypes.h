@@ -146,6 +146,8 @@ namespace dae
 			//Calculate Final Transform 
 			const auto finalTransform = scaleTransform * rotationTransform * translationTransform;
 
+			transformedPositions.clear();
+			transformedNormals.clear();
 			transformedPositions.reserve(positions.size());
 			transformedNormals.reserve(normals.size());
 
@@ -153,7 +155,6 @@ namespace dae
 			//...
 			for (unsigned int i = 0; i < positions.size(); ++i)
 			{
-				//transformedPositions[i] = finalTransform.TransformVector(positions[i]);
 				transformedPositions.emplace_back(finalTransform.TransformPoint(positions[i]));
 			}
 
@@ -162,7 +163,6 @@ namespace dae
 			//...
 			for (unsigned int i = 0; i < normals.size(); ++i)
 			{
-				//transformedNormals[i] = finalTransform.TransformVector(normals[i]);
 				transformedNormals.emplace_back(finalTransform.TransformVector(normals[i]));
 			}
 
