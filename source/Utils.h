@@ -16,21 +16,21 @@ namespace dae
 			hitRecord.didHit = false;
 
 			
-            float A = Vector3::Dot(ray.direction, ray.direction);
-            float B = Vector3::Dot(2 * ray.direction, (ray.origin - sphere.origin));
-            float C = Vector3::Dot((ray.origin - sphere.origin), (ray.origin - sphere.origin)) - (sphere.radius * sphere.radius);
+			const float A{ Vector3::Dot(ray.direction, ray.direction) };
+			const float B{ Vector3::Dot(2 * ray.direction, (ray.origin - sphere.origin)) };
+			const float C{ Vector3::Dot((ray.origin - sphere.origin), (ray.origin - sphere.origin)) - (sphere.radius * sphere.radius) };
 
-            float discriminant{ (B * B) - (4 * A * C) };
+            const float discriminant{ (B * B) - (4 * A * C) };
 
             if (discriminant < 0) return false;
 
-            float sqrtDiscriminant = std::sqrtf(discriminant);
-            float t = (-B - sqrtDiscriminant) / (2 * A);
+            const float sqrtDiscriminant = std::sqrtf(discriminant);
+			const float t{ (-B - sqrtDiscriminant) / (2 * A) };
 
-            if (t < ray.min)
+           /* if (t < ray.min)
             {
                 t = (-B + sqrtDiscriminant) / (2 * A);
-            }
+            }*/
 
 			if (t < ray.min || t > ray.max) return false;
 
@@ -90,13 +90,18 @@ namespace dae
 			//TODO: optimize, switch/cycle(modulo) cullmode without if statements
 			TriangleCullMode cullMode{ triangle.cullMode };
 			if (ignoreHitRecord) {
-				if (cullMode == TriangleCullMode::BackFaceCulling)
-				{
-					cullMode = TriangleCullMode::FrontFaceCulling;
-				}
-				else if (cullMode == TriangleCullMode::FrontFaceCulling) {
-					cullMode = TriangleCullMode::BackFaceCulling;
-				}
+				int cullModeInt{ (int)cullMode };
+				++cullModeInt;
+				cullModeInt = cullModeInt % 2;
+				cullMode = (TriangleCullMode)cullModeInt;
+
+				//if (cullMode == TriangleCullMode::BackFaceCulling)
+				//{
+				//	cullMode = TriangleCullMode::FrontFaceCulling;
+				//}
+				//else if (cullMode == TriangleCullMode::FrontFaceCulling) {
+				//	cullMode = TriangleCullMode::BackFaceCulling;
+				//}
 			}
 
 			const float rayDotNormal{ Vector3::Dot(ray.direction, n) };
