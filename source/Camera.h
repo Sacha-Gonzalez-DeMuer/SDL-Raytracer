@@ -34,14 +34,28 @@ namespace dae
 
 		Matrix cameraToWorld{};
 
+		float lastPitch{totalPitch};
+		float lastYaw{totalYaw};
+		Vector3 lastOrigin{};
+		//bool isUpdated{ false };
+		
+
 
 		Matrix CalculateCameraToWorld()
 		{
-			 right =  Vector3::Cross(Vector3::UnitY,forward ).Normalized() ;
-			 up = Vector3::Cross(forward, right).Normalized() ;
+			const bool isUpdated{
+				lastPitch == totalPitch &&
+				lastYaw == totalYaw &&
+				lastOrigin.x == origin.x && lastOrigin.y == origin.y && lastOrigin.z == origin.z };
 
-			 cameraToWorld = {
-			 right, up, forward, origin };
+			if (!isUpdated)
+			{
+				right = Vector3::Cross(Vector3::UnitY, forward).Normalized();
+				up = Vector3::Cross(forward, right).Normalized();
+
+				cameraToWorld = {
+				right, up, forward, origin };
+			}
 			
 			return cameraToWorld;
 		}
@@ -50,6 +64,10 @@ namespace dae
 		{
 			const float deltaTime = pTimer->GetElapsed();
 			const float constSpeed{ moveSpeed * deltaTime };
+
+			lastOrigin = origin;
+			lastPitch = totalPitch;
+			lastYaw = totalYaw;
 
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);

@@ -53,6 +53,7 @@ int main(int argc, char* args[])
 	float printTimer = 0.f;
 	bool isLooping = true;
 	bool takeScreenshot = false;
+	
 	while (isLooping)
 	{
 		//--------- Get input events ---------

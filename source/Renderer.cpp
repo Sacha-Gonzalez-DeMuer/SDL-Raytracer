@@ -36,11 +36,11 @@ void Renderer::Render(Scene* pScene) const
 	Camera& camera = pScene->GetCamera();
 	camera.CalculateCameraToWorld();
 
-	auto& materials = pScene->GetMaterials();
-	auto& lights = pScene->GetLights();
+	const auto& materials = pScene->GetMaterials();
+	const auto& lights = pScene->GetLights();
 
-	float FOV = tan((TO_RADIANS * camera.fovAngle)/ 2.f);
-	float aspectRatio{ static_cast<float>(m_Width) / m_Height };
+	const float FOV{ tan((TO_RADIANS * camera.fovAngle) / 2.f) };
+	const float aspectRatio{ static_cast<float>(m_Width) / m_Height };
 
 
 	const uint32_t numPixels = m_Width * m_Height;
@@ -117,23 +117,21 @@ void Renderer::Render(Scene* pScene) const
 
 void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float aspectRatio, const Camera& camera, const std::vector<Light>& lights, const std::vector<Material*>& materials) const
 {
-	const int px = pixelIndex % m_Width;
-	const int py = pixelIndex / m_Width;
+	const uint32_t px { pixelIndex % m_Width };
+	const uint32_t py { pixelIndex / m_Width };
 
-	float rx = px + .5f;
-	float ry = px + .5f;
+	const float rx { px + .5f };
+	const float ry { py + .5f };
 
-	float cx = (2 * (rx / float(m_Width)) - 1) * aspectRatio * fov;
-	float cy = (1 - (2 * ry / float(m_Height))) * fov;
+	const float cx{ (2 * (rx / static_cast<float>(m_Width)) - 1) * aspectRatio * fov };
+	const float cy{ (1 - (2 * ry / static_cast<float>(m_Height))) * fov };
 	
 	const Matrix camToWorld{ camera.cameraToWorld };
-	Vector3 rayDirection{ 0,0, 1 };
-	rayDirection.x = ((2.0f * (px + 0.5f) / float(m_Width)) - 1) * aspectRatio * fov;
-	rayDirection.y = (1 - (2.0f * (py + 0.5f) / float(m_Height))) * fov;
+	Vector3 rayDirection{ cx,cy, 1 };
 
 	rayDirection = camToWorld.TransformVector(rayDirection).Normalized();
 	
-	Ray viewRay{ camera.origin, rayDirection };
+	const Ray viewRay{ camera.origin, rayDirection };
 	ColorRGB finalColor{};
 	HitRecord closestHit{};
 
@@ -143,22 +141,23 @@ void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float 
 	{
 		for (unsigned int i = 0; i < pScene->GetLights().size(); ++i) //FOR EACH LIGHT IN THE SCENE
 		{
-			Ray rayToLight{  };
+			Ray rayToLight{ };
+
 			rayToLight.origin = closestHit.origin + closestHit.normal * .01f;
-			rayToLight.direction = LightUtils::GetDirectionToLight(pScene->GetLights()[i], rayToLight.origin);
-			rayToLight.max = rayToLight.direction.Magnitude();
+			rayToLight.direction = LightUtils::GetDirectionToLight(pScene->GetLights()[i], rayToLight.origin),
+			rayToLight.max = rayToLight.direction.SqrMagnitude();
 			rayToLight.direction.Normalize();
 
-			if (pScene->DoesHit(rayToLight) && m_ShadowsEnabled) //visible & shadowed
-			{
+
+			if (m_ShadowsEnabled && pScene->DoesHit(rayToLight)) //v
 				continue;
-			} 
+
+
 			else //visible & unshadowed
 			{
-				Light light{ pScene->GetLights()[i] };
-				float cosAngle = Vector3::Dot(rayToLight.direction, closestHit.normal) <= 0.0f 
-					? .0f 
-					: Vector3::Dot(rayToLight.direction, closestHit.normal);
+				const Light light{ pScene->GetLights()[i] };
+				float cosAngle{ Vector3::Dot(rayToLight.direction, closestHit.normal) };
+				if (cosAngle < 0) cosAngle = 0;
 
 				switch (m_CurrentLightingMode)
 				{
@@ -173,9 +172,7 @@ void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float 
 					break;
 				case dae::Renderer::LightingMode::Combined:
 					finalColor += LightUtils::GetRadiance(light, closestHit.origin) * materials[closestHit.materialIndex]->Shade(closestHit, rayToLight.direction, -viewRay.direction) * cosAngle;
-					break;
-				default:
-					break;
+					
 				}
 			}
 		}
@@ -200,8 +197,8 @@ bool Renderer::SaveBufferToImage() const
 
 void dae::Renderer::CycleLightingMode()
 {
-	int current = int(m_CurrentLightingMode);
+	int current = static_cast<int>(m_CurrentLightingMode);
 	++current;
 	current = current % 4;
-	m_CurrentLightingMode = LightingMode(current);
+	m_CurrentLightingMode = static_cast<LightingMode>(current);
 }

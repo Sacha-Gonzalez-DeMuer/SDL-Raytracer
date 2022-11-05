@@ -30,7 +30,6 @@ namespace dae {
 
 	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) const
 	{
-		//todo W1
 		HitRecord testHit{};
 		testHit.t = FLT_MAX;
 		for (unsigned int i = 0; i < m_SphereGeometries.size(); i++)
@@ -63,7 +62,6 @@ namespace dae {
 
 	bool Scene::DoesHit(const Ray& ray) const
 	{
-		//todo W3
 		HitRecord testHit{};
 		for (unsigned int i = 0; i < m_SphereGeometries.size(); i++)
 		{
@@ -312,6 +310,7 @@ namespace dae {
 		Scene::Update(pTimer);
 
 		pMesh->RotateY(PI_DIV_2 * pTimer->GetTotal());
+		pMesh->UpdateAABB();
 		pMesh->UpdateTransforms();
 	}
 
@@ -379,6 +378,7 @@ namespace dae {
 		for (const auto m : m_pMeshes)
 		{
 			m->RotateY(yawAngle);
+			m->UpdateAABB();
 			m->UpdateTransforms();
 		}
 	}
@@ -400,9 +400,19 @@ namespace dae {
 		const auto matLambert_GrayBlue = AddMaterial(new Material_Lambert({ 0.49f, 0.57f, 0.57f }, 1.0f));
 		const auto matLambert_White = AddMaterial(new Material_Lambert(colors::White, 1.f));
 
-		//if (!Utils::ParseOBJ("Resources/lowpoly_bunny.obj", m_pObjMesh->positions, m_pObjMesh->normals, m_pObjMesh->indices))
-		//	std::cerr << "Error loading obj. Bunny Scene.\n";
-		
+		//Plane
+		AddPlane(Vector3{ 0.0f, 0.0f, 10.0f }, Vector3{ 0.0f, 0.0f, -1.0f }, matLambert_GrayBlue);; //Back
+		AddPlane(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{ 0.0f, 1.0f, 0.0f }, matLambert_GrayBlue);; //Bottom
+		AddPlane(Vector3{ 0.0f, 10.0f, 0.0f }, Vector3{ 0.0f, -1.0f, 0.0f }, matLambert_GrayBlue);; //Top
+		AddPlane(Vector3{ 5.0f, 0.f, 0.0f }, Vector3{ -1.0f, 0.0f, 0.0f }, matLambert_GrayBlue);; //Right
+		AddPlane(Vector3{ -5.0f, 0.0f, 0.0f }, Vector3{ 1.0f, 0.0f, 0.0f }, matLambert_GrayBlue);; //Left
+
+		//m_pObjMesh = new TriangleMesh();
+		m_pObjMesh = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
+		if (!Utils::ParseOBJ("Resources/lowpoly_bunny.obj", m_pObjMesh->positions, m_pObjMesh->normals, m_pObjMesh->indices))
+			std::cerr << "Error loading obj. Bunny Scene.\n";
+
+		m_pObjMesh->Scale({2,2,2});
 
 		//Light
 		AddPointLight(Vector3{ 0.0f, 5.0f, 5.0f }, 50.f, ColorRGB{ 1.0f, 0.61f, 0.45f }); // Backlight
@@ -417,6 +427,8 @@ namespace dae {
 		const auto yawAngle = (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2;
 
 		m_pObjMesh->RotateY(yawAngle);
+
+		m_pObjMesh->UpdateAABB();
 		m_pObjMesh->UpdateTransforms();
 	}
 }

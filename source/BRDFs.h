@@ -38,8 +38,6 @@ namespace dae
 			if (cosAngle < 0) cosAngle = 0;
 			const float specular{ ks * std::powf(cosAngle, exp) };
 
-
-
 			return { specular, specular, specular };
 		}
 
@@ -85,7 +83,7 @@ namespace dae
 		 */
 		static float GeometryFunction_SchlickGGX(const Vector3& n, const Vector3& v, float roughness)
 		{
-			float angle{ Vector3::Dot(n, v) };
+			const float angle{ Vector3::Dot(n, v) };
 			if (angle < 0) angle = 0;
 			const float k{
 				((roughness + 1) * (roughness + 1))
@@ -104,9 +102,9 @@ namespace dae
 		 */
 		static float GeometryFunction_Smith(const Vector3& n, const Vector3& v, const Vector3& l, float roughness)
 		{
-			float schlickView{ GeometryFunction_SchlickGGX(n, v, roughness) };
-			float schlickLight{  GeometryFunction_SchlickGGX(n, l, roughness) };
-			float smith{ schlickView * schlickLight };
+			const float schlickView{ GeometryFunction_SchlickGGX(n, v, roughness) };
+			const float schlickLight{  GeometryFunction_SchlickGGX(n, l, roughness) };
+			const float smith{ schlickView * schlickLight };
 			//if (smith < 0) smith = 0;
 
 			return smith;
