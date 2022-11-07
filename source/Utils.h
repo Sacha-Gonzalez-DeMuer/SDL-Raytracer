@@ -51,7 +51,9 @@ namespace dae
 		{
 			hitRecord.didHit = false;
 
-			const float t{ Vector3::Dot((plane.origin - ray.origin), plane.normal) / Vector3::Dot(ray.direction, plane.normal) };
+			const float dirDotNormal{ Vector3::Dot(ray.direction, plane.normal) };
+
+			const float t{ Vector3::Dot((plane.origin - ray.origin), plane.normal) / dirDotNormal };
 
 			if (t < ray.min || t * t > ray.max) return false;
 			
@@ -179,22 +181,24 @@ namespace dae
 #pragma endregion
 #pragma region TriangeMesh HitTest
 
-		inline bool SlabTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
+		inline bool SlabTest_TriangleMesh(const Vector3& minAABB, const Vector3& maxAABB, const Ray& ray)
 		{
-			const float tx1{ (mesh.transformedMinAABB.x - ray.origin.x) / ray.direction.x };
-			const float tx2{ (mesh.transformedMaxAABB.x - ray.origin.x) / ray.direction.x };
+			const Vector3 originToMinAABB{ (minAABB - ray.origin) };
+			const Vector3 originToMaxAABB{ (maxAABB - ray.origin) };
+			const float tx1{ originToMinAABB.x * ray.reciproke.x };
+			const float tx2{ originToMaxAABB.x * ray.reciproke.x };
 
 			float tmin = std::min(tx1, tx2);
 			float tmax = std::max(tx1, tx2);
 
-			const float ty1{ (mesh.transformedMinAABB.y - ray.origin.y) / ray.direction.y };
-			const float ty2{ (mesh.transformedMaxAABB.y - ray.origin.y) / ray.direction.y };
+			const float ty1{  originToMinAABB.y * ray.reciproke.y };
+			const float ty2{  originToMaxAABB.y * ray.reciproke.y };
 
 			tmin = std::max(tmin, std::min(ty1, ty2));
 			tmax = std::min(tmax, std::max(ty1, ty2));
 
-			const float tz1{ (mesh.transformedMinAABB.z - ray.origin.z) / ray.direction.z };
-			const float tz2{ (mesh.transformedMaxAABB.z - ray.origin.z) / ray.direction.z };
+			const float tz1{  originToMinAABB.z * ray.reciproke.z };
+			const float tz2{  originToMaxAABB.z * ray.reciproke.z };
 
 			tmin = std::max(tmin, std::min(tz1, tz2));
 			tmax = std::min(tmax, std::max(tz1, tz2));
@@ -202,12 +206,48 @@ namespace dae
 			return tmax > 0 && tmax >= tmin;
 		}
 
+		inline bool IntersectBVH(const TriangleMesh& mesh,const Ray& ray, const uint32_t nodeIdx, HitRecord& hitRecord, bool ignoreHitRecord = false) {
+
+			BVHNode node = mesh.bvhNodes[nodeIdx];
+
+			HitRecord tmp{};
+
+			if (!GeometryUtils::SlabTest_TriangleMesh(node.bounds.minAABB, node.bounds.maxAABB, ray)) 
+				return false;
+
+			if (node.isLeaf()) {
+				for (uint32_t i = 0; i < node.primCount; ++i)
+				{
+					if(!GeometryUtils::HitTest_Triangle(*mesh.tris[node.firstPrim + i], ray, tmp, ignoreHitRecord))
+						return false;
+
+					if (ignoreHitRecord) return true;
+					
+					if (tmp.t < hitRecord.t)
+					{
+						hitRecord = tmp;
+					}
+					return hitRecord.didHit;
+				}
+			}
+			else
+			{
+				IntersectBVH(mesh, ray, node.leftChild, hitRecord, ignoreHitRecord);
+				IntersectBVH(mesh, ray, node.leftChild + 1, hitRecord, ignoreHitRecord);
+			}
+
+		}
+
+		inline bool IntersectBVH(const TriangleMesh& mesh, const Ray& ray, const uint32_t nodeIdx) {
+			HitRecord tmp{};
+			return IntersectBVH(mesh, ray, nodeIdx,tmp, true);
+		}
+
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//if (!SlabTest_TriangleMesh(mesh, ray))
-			//	return false;
-
-
+			if (!SlabTest_TriangleMesh(mesh.transformedMinAABB, mesh.transformedMaxAABB, ray))
+				return false;
+			
 			Triangle t{};
 			HitRecord tmp{};
 			int normalIdx{ 0 };

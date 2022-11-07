@@ -83,7 +83,7 @@ namespace dae
 		 */
 		static float GeometryFunction_SchlickGGX(const Vector3& n, const Vector3& v, float roughness)
 		{
-			const float angle{ Vector3::Dot(n, v) };
+			float angle{ Vector3::Dot(n, v) };
 			if (angle < 0) angle = 0;
 			const float k{
 				((roughness + 1) * (roughness + 1))

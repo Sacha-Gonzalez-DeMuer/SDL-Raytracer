@@ -52,7 +52,7 @@ namespace dae {
 
 		for (unsigned int i = 0; i < m_TriangleMeshGeometries.size(); ++i)
 		{
-			GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[i], ray, testHit);
+			GeometryUtils::IntersectBVH(m_TriangleMeshGeometries[i], ray, m_TriangleMeshGeometries[i].rootNodeIdx, testHit);
 			if (testHit.t < closestHit.t)
 			{
 				closestHit = testHit;
@@ -78,7 +78,7 @@ namespace dae {
 
 		for (unsigned int i = 0; i < m_TriangleMeshGeometries.size(); i++)
 		{
-			GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[i], ray, testHit);
+			GeometryUtils::IntersectBVH(m_TriangleMeshGeometries[i], ray, m_TriangleMeshGeometries[i].rootNodeIdx, testHit);
 			if (testHit.didHit) return true;
 		}
 
@@ -363,6 +363,11 @@ namespace dae {
 		m_pMeshes[2]->Translate({ 1.75f, 4.5f, 0.0f });
 		m_pMeshes[2]->UpdateTransforms();
 
+		for (auto& m: m_pMeshes) {
+
+			m->UpdateAABB();
+		}
+
 		//Light
 		AddPointLight(Vector3{ 0.0f, 5.0f, 5.0f }, 50.f, ColorRGB{ 1.0f, 0.61f, 0.45f }); // Backlight
 		AddPointLight(Vector3{ -2.5f, 5.0f, -5.0f }, 70.f, ColorRGB{ 1.0f, 0.8f, 0.45f }); // Frontlight left
@@ -378,7 +383,6 @@ namespace dae {
 		for (const auto m : m_pMeshes)
 		{
 			m->RotateY(yawAngle);
-			m->UpdateAABB();
 			m->UpdateTransforms();
 		}
 	}
@@ -414,6 +418,10 @@ namespace dae {
 
 		m_pObjMesh->Scale({2,2,2});
 
+		m_pObjMesh->UpdateAABB();
+		//m_pObjMesh->GenerateBoundaryVolumeHierarchy();
+		m_pObjMesh->BuildBVH();
+
 		//Light
 		AddPointLight(Vector3{ 0.0f, 5.0f, 5.0f }, 50.f, ColorRGB{ 1.0f, 0.61f, 0.45f }); // Backlight
 		AddPointLight(Vector3{ -2.5f, 5.0f, -5.0f }, 70.f, ColorRGB{ 1.0f, 0.8f, 0.45f }); // Frontlight left
@@ -427,8 +435,6 @@ namespace dae {
 		const auto yawAngle = (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2;
 
 		m_pObjMesh->RotateY(yawAngle);
-
-		m_pObjMesh->UpdateAABB();
 		m_pObjMesh->UpdateTransforms();
 	}
 }

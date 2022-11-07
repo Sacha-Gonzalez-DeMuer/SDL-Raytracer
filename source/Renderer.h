@@ -31,7 +31,6 @@ namespace dae
 		void RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float aspectRatio, const Camera& camera, const std::vector<Light>& lights, const std::vector<Material*>& materials) const;
 
 
-
 		void CycleLightingMode();
 		void ToggleShadows() { m_ShadowsEnabled = !m_ShadowsEnabled; };
 
@@ -44,6 +43,7 @@ namespace dae
 		int m_Width{};
 		int m_Height{};
 
+
 		enum class LightingMode {
 			ObservedArea,
 			Radiance,
@@ -54,6 +54,5 @@ namespace dae
 		LightingMode m_CurrentLightingMode{ LightingMode::Combined };
 		bool m_ShadowsEnabled{ true };
 
-		void Testing();
 	};
 }

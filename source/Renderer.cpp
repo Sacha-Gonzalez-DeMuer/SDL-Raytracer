@@ -19,7 +19,7 @@
 using namespace dae;
 
 //#define ASYNC
-//#define PARALLEL_FOR
+#define PARALLEL_FOR
 
 Renderer::Renderer(SDL_Window * pWindow) :
 	m_pWindow(pWindow),
@@ -29,6 +29,7 @@ Renderer::Renderer(SDL_Window * pWindow) :
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 	m_pBufferPixels = static_cast<uint32_t*>(m_pBuffer->pixels);
 }
+
 
 
 void Renderer::Render(Scene* pScene) const
@@ -117,21 +118,25 @@ void Renderer::Render(Scene* pScene) const
 
 void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float aspectRatio, const Camera& camera, const std::vector<Light>& lights, const std::vector<Material*>& materials) const
 {
+	const float recipWidth{ 1.0f / m_Width };
+	const float recipHeight{ 1.0f / m_Height };
 	const uint32_t px { pixelIndex % m_Width };
 	const uint32_t py { pixelIndex / m_Width };
 
 	const float rx { px + .5f };
 	const float ry { py + .5f };
 
-	const float cx{ (2 * (rx / static_cast<float>(m_Width)) - 1) * aspectRatio * fov };
-	const float cy{ (1 - (2 * ry / static_cast<float>(m_Height))) * fov };
+	const float rxWidthRatio{ rx * recipWidth };
+
+	const float cx{ (2 * rxWidthRatio - 1) * aspectRatio * fov };
+	const float cy{ (1 - (2 * ry * recipHeight)) * fov };
 	
 	const Matrix camToWorld{ camera.cameraToWorld };
 	Vector3 rayDirection{ cx,cy, 1 };
 
 	rayDirection = camToWorld.TransformVector(rayDirection).Normalized();
 	
-	const Ray viewRay{ camera.origin, rayDirection };
+	const Ray viewRay{ camera.origin, rayDirection,{1 / rayDirection.x, 1 / rayDirection.y, 1 / rayDirection.z } };
 	ColorRGB finalColor{};
 	HitRecord closestHit{};
 
@@ -147,6 +152,7 @@ void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float 
 			rayToLight.direction = LightUtils::GetDirectionToLight(pScene->GetLights()[i], rayToLight.origin),
 			rayToLight.max = rayToLight.direction.SqrMagnitude();
 			rayToLight.direction.Normalize();
+			rayToLight.reciproke = { 1 / rayToLight.direction.x, 1 / rayToLight.direction.y, 1 / rayToLight.direction.z };
 
 
 			if (m_ShadowsEnabled && pScene->DoesHit(rayToLight)) //v
