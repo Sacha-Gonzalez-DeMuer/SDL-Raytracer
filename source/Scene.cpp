@@ -52,7 +52,7 @@ namespace dae {
 
 		for (unsigned int i = 0; i < m_TriangleMeshGeometries.size(); ++i)
 		{
-			GeometryUtils::IntersectBVH(m_TriangleMeshGeometries[i], ray, m_TriangleMeshGeometries[i].rootNodeIdx, testHit);
+			GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[i], ray, testHit);
 			if (testHit.t < closestHit.t)
 			{
 				closestHit = testHit;
@@ -78,7 +78,7 @@ namespace dae {
 
 		for (unsigned int i = 0; i < m_TriangleMeshGeometries.size(); i++)
 		{
-			GeometryUtils::IntersectBVH(m_TriangleMeshGeometries[i], ray, m_TriangleMeshGeometries[i].rootNodeIdx, testHit);
+			GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[i], ray, testHit);
 			if (testHit.didHit) return true;
 		}
 
