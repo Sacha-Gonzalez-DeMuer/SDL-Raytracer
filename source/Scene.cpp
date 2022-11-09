@@ -442,11 +442,9 @@ namespace dae {
 		m_pObjMesh->materialIndex = matLambert_White;
 		m_pObjMesh->cullMode = TriangleCullMode::BackFaceCulling;
 		m_pObjMesh->Scale({2,2,2});
-
-
+		m_pObjMesh->UpdateTransforms();
 
 		m_BVH = AddBVH(*m_pObjMesh);
-
 		m_pObjMesh->UpdateAABB();
 
 		//Light
@@ -461,7 +459,9 @@ namespace dae {
 
 		const auto yawAngle = (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2;
 
+
 		m_pObjMesh->RotateY(yawAngle);
 		m_pObjMesh->UpdateTransforms();
+		m_BVH->Update();
 	}
 }

@@ -154,7 +154,6 @@ void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float 
 			rayToLight.direction.Normalize();
 			rayToLight.reciproke = { 1 / rayToLight.direction.x, 1 / rayToLight.direction.y, 1 / rayToLight.direction.z };
 
-
 			if (m_ShadowsEnabled && pScene->DoesHit(rayToLight)) //v
 				continue;
 

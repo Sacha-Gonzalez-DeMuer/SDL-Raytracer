@@ -186,20 +186,20 @@ namespace dae
 		{
 			const Vector3 originToMinAABB{ (minAABB - ray.origin) };
 			const Vector3 originToMaxAABB{ (maxAABB - ray.origin) };
-			const float tx1{ originToMinAABB.x / ray.direction.x };
-			const float tx2{ originToMaxAABB.x / ray.direction.x };
+			const float tx1{ originToMinAABB.x * ray.reciproke.x };
+			const float tx2{ originToMaxAABB.x * ray.reciproke.x };
 
 			float tmin = std::min(tx1, tx2);
 			float tmax = std::max(tx1, tx2);
 
-			const float ty1{  originToMinAABB.y / ray.direction.y };
-			const float ty2{  originToMaxAABB.y / ray.direction.y };
+			const float ty1{  originToMinAABB.y * ray.reciproke.y };
+			const float ty2{  originToMaxAABB.y * ray.reciproke.y };
 
 			tmin = std::max(tmin, std::min(ty1, ty2));
 			tmax = std::min(tmax, std::max(ty1, ty2));
 
-			const float tz1{  originToMinAABB.z / ray.direction.z };
-			const float tz2{  originToMaxAABB.z / ray.direction.z };
+			const float tz1{  originToMinAABB.z * ray.reciproke.z };
+			const float tz2{  originToMaxAABB.z * ray.reciproke.z };
 
 			tmin = std::max(tmin, std::min(tz1, tz2));
 			tmax = std::min(tmax, std::max(tz1, tz2));
@@ -261,7 +261,7 @@ namespace dae
 
 		inline bool HitTest_BVH( BVH& bvh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false) {
 
-			bvh.Intersect(ray, bvh.GetRootNodeIdx(), hitRecord, ignoreHitRecord);
+			bvh.IntersectBVH(ray, hitRecord, ignoreHitRecord);
 
 			return hitRecord.didHit;
 		}

@@ -66,14 +66,26 @@ namespace dae
 		unsigned char materialIndex{};
 	};
 
-	struct AABB {
+	struct AABB 
+	{
 		Vector3 minAABB;
 		Vector3 maxAABB;
+		void Grow(const Vector3& to) 
+		{
+			minAABB = Vector3::Min(minAABB, to);
+			maxAABB = Vector3::Max(maxAABB, to);
+		}
+		float area()
+		{
+			Vector3 extent = maxAABB - minAABB;
+			return extent.x * extent.y + extent.y * extent.z + extent.z * extent.x;
+		}
 	};
 
-	struct BVHNode {
+	struct BVHNode 
+	{
 		AABB bounds{};
-		uint32_t leftNode{}, firstTriIdx{}, triCount{};
+		uint32_t leftFirst{}, triCount{};
 		bool isLeaf() { return triCount > 0; };
 	};
 
@@ -321,8 +333,6 @@ namespace dae
 				}
 			}
 		}
-
-
 
 		void Translate(const Vector3& translation)
 		{
