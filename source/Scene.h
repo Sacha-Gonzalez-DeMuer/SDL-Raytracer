@@ -5,6 +5,7 @@
 #include "Math.h"
 #include "DataTypes.h"
 #include "Camera.h"
+#include "BVH.h"
 
 namespace dae
 {
@@ -34,13 +35,14 @@ namespace dae
 		}
 
 		Camera& GetCamera() { return m_Camera; }
-		void GetClosestHit(const Ray& ray, HitRecord& closestHit) const;
-		bool DoesHit(const Ray& ray) const;
+		void GetClosestHit(const Ray& ray, HitRecord& closestHit);
+		bool DoesHit(const Ray& ray);
 
 		const std::vector<Plane>& GetPlaneGeometries() const { return m_PlaneGeometries; }
 		const std::vector<Sphere>& GetSphereGeometries() const { return m_SphereGeometries; }
 		const std::vector<Light>& GetLights() const { return m_Lights; }
 		const std::vector<Material*> GetMaterials() const { return m_Materials; }
+		const std::vector<BVH>& GetBoundingVolumeHierarchies() const { return m_BoundingVolumeHierarchies; };
 
 	protected:
 		std::string	sceneName;
@@ -50,12 +52,14 @@ namespace dae
 		std::vector<TriangleMesh> m_TriangleMeshGeometries{};
 		std::vector<Light> m_Lights{};
 		std::vector<Material*> m_Materials{};
+		std::vector<BVH> m_BoundingVolumeHierarchies{};
 
 		Camera m_Camera{};
 
 		Sphere* AddSphere(const Vector3& origin, float radius, unsigned char materialIndex = 0);
 		Plane* AddPlane(const Vector3& origin, const Vector3& normal, unsigned char materialIndex = 0);
 		TriangleMesh* AddTriangleMesh(TriangleCullMode cullMode, unsigned char materialIndex = 0);
+		BVH* AddBVH(TriangleMesh& mesh);
 
 		Light* AddPointLight(const Vector3& origin, float intensity, const ColorRGB& color);
 		Light* AddDirectionalLight(const Vector3& direction, float intensity, const ColorRGB& color);
@@ -161,5 +165,6 @@ namespace dae
 
 	private:
 		TriangleMesh* m_pObjMesh{ nullptr };
+		BVH* m_BVH{ nullptr };
 	};
 }

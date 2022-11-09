@@ -53,6 +53,9 @@
     <ClInclude Include="DataTypes.h">
       <Filter>Misc</Filter>
     </ClInclude>
+    <ClInclude Include="BVH.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -72,8 +75,8 @@
     <ClCompile Include="Timer.cpp">
       <Filter>Misc</Filter>
     </ClCompile>
-    <ClCompile Include="DataTypes.cpp">
-      <Filter>Math</Filter>
+    <ClCompile Include="BVH.cpp">
+      <Filter>Misc</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -161,10 +161,9 @@ namespace dae
 
 			if (!(w1 >= 0 && w2 >= 0 && w1 + w2 < 1)) return false;*/
 
-
+			hitRecord.didHit = true;
 			if (ignoreHitRecord) return true;
 
-			hitRecord.didHit = true;
 			hitRecord.materialIndex = triangle.materialIndex;
 			hitRecord.normal = triangle.normal;
 			hitRecord.origin = ray.origin + ray.direction * t;
@@ -178,6 +177,8 @@ namespace dae
 			HitRecord temp{};
 			return HitTest_Triangle(triangle, ray, temp, true);
 		}
+
+
 #pragma endregion
 #pragma region TriangeMesh HitTest
 
@@ -185,62 +186,25 @@ namespace dae
 		{
 			const Vector3 originToMinAABB{ (minAABB - ray.origin) };
 			const Vector3 originToMaxAABB{ (maxAABB - ray.origin) };
-			const float tx1{ originToMinAABB.x * ray.reciproke.x };
-			const float tx2{ originToMaxAABB.x * ray.reciproke.x };
+			const float tx1{ originToMinAABB.x / ray.direction.x };
+			const float tx2{ originToMaxAABB.x / ray.direction.x };
 
 			float tmin = std::min(tx1, tx2);
 			float tmax = std::max(tx1, tx2);
 
-			const float ty1{  originToMinAABB.y * ray.reciproke.y };
-			const float ty2{  originToMaxAABB.y * ray.reciproke.y };
+			const float ty1{  originToMinAABB.y / ray.direction.y };
+			const float ty2{  originToMaxAABB.y / ray.direction.y };
 
 			tmin = std::max(tmin, std::min(ty1, ty2));
 			tmax = std::min(tmax, std::max(ty1, ty2));
 
-			const float tz1{  originToMinAABB.z * ray.reciproke.z };
-			const float tz2{  originToMaxAABB.z * ray.reciproke.z };
+			const float tz1{  originToMinAABB.z / ray.direction.z };
+			const float tz2{  originToMaxAABB.z / ray.direction.z };
 
 			tmin = std::max(tmin, std::min(tz1, tz2));
 			tmax = std::min(tmax, std::max(tz1, tz2));
 
 			return tmax > 0 && tmax >= tmin;
-		}
-
-		inline bool IntersectBVH(const TriangleMesh& mesh,const Ray& ray, const uint32_t nodeIdx, HitRecord& hitRecord, bool ignoreHitRecord = false) {
-
-			BVHNode node = mesh.bvhNodes[nodeIdx];
-
-			HitRecord tmp{};
-
-			if (!GeometryUtils::SlabTest_TriangleMesh(node.bounds.minAABB, node.bounds.maxAABB, ray)) 
-				return false;
-
-			if (node.isLeaf()) {
-				for (uint32_t i = 0; i < node.primCount; ++i)
-				{
-					if(!GeometryUtils::HitTest_Triangle(*mesh.tris[node.firstPrim + i], ray, tmp, ignoreHitRecord))
-						return false;
-
-					if (ignoreHitRecord) return true;
-					
-					if (tmp.t < hitRecord.t)
-					{
-						hitRecord = tmp;
-					}
-					return hitRecord.didHit;
-				}
-			}
-			else
-			{
-				IntersectBVH(mesh, ray, node.leftChild, hitRecord, ignoreHitRecord);
-				IntersectBVH(mesh, ray, node.leftChild + 1, hitRecord, ignoreHitRecord);
-			}
-
-		}
-
-		inline bool IntersectBVH(const TriangleMesh& mesh, const Ray& ray, const uint32_t nodeIdx) {
-			HitRecord tmp{};
-			return IntersectBVH(mesh, ray, nodeIdx,tmp, true);
 		}
 
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
@@ -293,6 +257,20 @@ namespace dae
 		{
 			HitRecord temp{};
 			return HitTest_TriangleMesh(mesh, ray, temp, true);
+		}
+
+		inline bool HitTest_BVH( BVH& bvh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false) {
+
+			bvh.Intersect(ray, bvh.GetRootNodeIdx(), hitRecord, ignoreHitRecord);
+
+			return hitRecord.didHit;
+		}
+
+		inline bool HitTest_BVH( BVH& bvh, const Ray& ray) {
+
+			HitRecord tmp{};
+
+			return HitTest_BVH(bvh, ray, tmp, true);
 		}
 
 #pragma endregion

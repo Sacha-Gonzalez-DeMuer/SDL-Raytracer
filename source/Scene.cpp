@@ -1,7 +1,7 @@
 #include "Scene.h"
 #include "Utils.h"
 #include "Material.h"
-
+#include "BVH.h"
 #include <iostream>
 
 namespace dae {
@@ -28,7 +28,7 @@ namespace dae {
 		m_Materials.clear();
 	}
 
-	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) const
+	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) 
 	{
 		HitRecord testHit{};
 		testHit.t = FLT_MAX;
@@ -50,6 +50,15 @@ namespace dae {
 			}
 		}
 
+		for (unsigned int i = 0; i < m_BoundingVolumeHierarchies.size(); ++i)
+		{
+			GeometryUtils::HitTest_BVH(m_BoundingVolumeHierarchies[i], ray, testHit);
+			if (testHit.t < closestHit.t)
+			{
+				closestHit = testHit;
+			}
+		}
+
 		for (unsigned int i = 0; i < m_TriangleMeshGeometries.size(); ++i)
 		{
 			GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[i], ray, testHit);
@@ -60,7 +69,7 @@ namespace dae {
 		}
 	}
 
-	bool Scene::DoesHit(const Ray& ray) const
+	bool Scene::DoesHit(const Ray& ray) 
 	{
 		HitRecord testHit{};
 		for (unsigned int i = 0; i < m_SphereGeometries.size(); i++)
@@ -75,6 +84,13 @@ namespace dae {
 			GeometryUtils::HitTest_Plane(m_PlaneGeometries[i], ray, testHit);
 			if (testHit.didHit) return true;
 		}
+
+		for (unsigned int i = 0; i < m_BoundingVolumeHierarchies.size(); i++)
+		{
+			GeometryUtils::HitTest_BVH(m_BoundingVolumeHierarchies[i], ray, testHit);
+			if (testHit.didHit) return true;
+		}
+
 
 		for (unsigned int i = 0; i < m_TriangleMeshGeometries.size(); i++)
 		{
@@ -116,6 +132,14 @@ namespace dae {
 
 		m_TriangleMeshGeometries.emplace_back(m);
 		return &m_TriangleMeshGeometries.back();
+	}
+
+	BVH* Scene::AddBVH(TriangleMesh& mesh)
+	{
+		BVH bvh{mesh};
+
+		m_BoundingVolumeHierarchies.emplace_back(bvh);
+		return &m_BoundingVolumeHierarchies.back();
 	}
 
 	Light* Scene::AddPointLight(const Vector3& origin, float intensity, const ColorRGB& color)
@@ -411,16 +435,19 @@ namespace dae {
 		AddPlane(Vector3{ 5.0f, 0.f, 0.0f }, Vector3{ -1.0f, 0.0f, 0.0f }, matLambert_GrayBlue);; //Right
 		AddPlane(Vector3{ -5.0f, 0.0f, 0.0f }, Vector3{ 1.0f, 0.0f, 0.0f }, matLambert_GrayBlue);; //Left
 
-		//m_pObjMesh = new TriangleMesh();
-		m_pObjMesh = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
+		m_pObjMesh = new TriangleMesh();
+		//m_pObjMesh = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
 		if (!Utils::ParseOBJ("Resources/lowpoly_bunny.obj", m_pObjMesh->positions, m_pObjMesh->normals, m_pObjMesh->indices))
 			std::cerr << "Error loading obj. Bunny Scene.\n";
-
+		m_pObjMesh->materialIndex = matLambert_White;
+		m_pObjMesh->cullMode = TriangleCullMode::BackFaceCulling;
 		m_pObjMesh->Scale({2,2,2});
 
+
+
+		m_BVH = AddBVH(*m_pObjMesh);
+
 		m_pObjMesh->UpdateAABB();
-		//m_pObjMesh->GenerateBoundaryVolumeHierarchy();
-		m_pObjMesh->BuildBVH();
 
 		//Light
 		AddPointLight(Vector3{ 0.0f, 5.0f, 5.0f }, 50.f, ColorRGB{ 1.0f, 0.61f, 0.45f }); // Backlight

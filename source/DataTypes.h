@@ -73,9 +73,8 @@ namespace dae
 
 	struct BVHNode {
 		AABB bounds{};
-		uint32_t leftChild{}, rightChild{};
-		uint32_t firstPrim{}, primCount{};
-		bool isLeaf() { return primCount > 0; };
+		uint32_t leftNode{}, firstTriIdx{}, triCount{};
+		bool isLeaf() { return triCount > 0; };
 	};
 
 	struct TriangleMesh
@@ -108,12 +107,6 @@ namespace dae
 		Matrix translationTransform{};
 		Matrix scaleTransform{};
 
-		std::vector<Triangle*> tris{};
-
-		std::vector<BVHNode> bvhNodes{};
-		uint32_t rootNodeIdx{ 0 };
-		uint32_t nodesUsed{ 1 };
-
 		Vector3 minAABB;
 		Vector3 maxAABB;
 
@@ -122,23 +115,6 @@ namespace dae
 
 		std::vector<Vector3> transformedPositions{};
 		std::vector<Vector3> transformedNormals{};
-
-
-		void BuildBVH() {
-			GenerateTriangles(tris);
-			bvhNodes.reserve(tris.size() * 2 - 1);
-			
-			BVHNode& root = bvhNodes[rootNodeIdx];
-			root.leftChild = root.rightChild = 0;
-			root.firstPrim = 0;
-			root.primCount = static_cast<uint32_t>(tris.size());
-
-			UpdateNodeBounds(rootNodeIdx);
-			Subdivide(rootNodeIdx);
-
-
-			std::cout << "done building\n";
-		}
 
 		/*
 		void GenerateBoundaryVolumeHierarchy()
@@ -331,95 +307,6 @@ namespace dae
 		}
 		*/
 
-		void GenerateTriangles(std::vector<Triangle*>& vecT) 
-		{
-			Triangle t{};
-			int normalIdx{ 0 };
-			for (uint32_t i = 0; i < indices.size(); i += 3)
-			{
-				const uint32_t v0 = indices[i];
-				const uint32_t v1 = indices[i + 1];
-				const uint32_t v2 = indices[i + 2];
-
-				t = {
-					positions[v0],
-					positions[v1],
-					positions[v2],
-					positions[normalIdx++]
-				};
-
-				t.cullMode = cullMode;
-				t.materialIndex = materialIndex;
-
-				t.centroid = (t.v0 + t.v1 + t.v2) * .33f;
-
-				vecT.push_back(new Triangle(t.v0, t.v1, t.v2, t.normal, t.cullMode, t.materialIndex, t.centroid));
-			}
-		}
-
-		void Subdivide(uint32_t nodeIdx) 
-		{
-			BVHNode& node = bvhNodes[nodeIdx];
-			if (node.primCount <= 2) return;
-
-			//find split plane axis & position
-			const Vector3 extent{ node.bounds.maxAABB - node.bounds.minAABB };
-			int axis{ 0 };
-			if (extent.y > extent.x) axis = 1;
-			if (extent.z > extent[axis]) axis = 2;
-			const float splitPos{ node.bounds.minAABB[axis] + extent[axis] * .5f };
-
-			//split the group in two halves
-			int i = node.firstPrim;
-			int j = i + node.primCount - 1;
-			while (i <= j) {
-				if (tris[i]->centroid[axis] < splitPos)
-					++i;
-				else
-					std::swap(tris[i], tris[j--]); //swap each primitive that is not on the left of the plane with a primitive at the end of the list.
-			}
-
-			//abort split if one of the sides is empty
-			int leftCount = i - node.firstPrim;
-			if (leftCount == 0 || leftCount == node.primCount) return;
-
-			//create child nodes for each half
-			int leftChildIdx = nodesUsed++;
-			int rightChildIdx = nodesUsed++;
-
-			node.leftChild = leftChildIdx;
-			bvhNodes[leftChildIdx].firstPrim = node.firstPrim;
-			bvhNodes[leftChildIdx].primCount = leftCount;
-			bvhNodes[rightChildIdx].firstPrim = i;
-			bvhNodes[rightChildIdx].primCount = node.primCount - leftCount;
-			node.primCount = 0;
-
-			UpdateNodeBounds(leftChildIdx);
-			UpdateNodeBounds(rightChildIdx);
-
-			Subdivide(leftChildIdx);
-			Subdivide(rightChildIdx);
-		}
-
-		void UpdateNodeBounds(uint32_t nodeIdx) {
-			BVHNode& node = bvhNodes[nodeIdx];
-
-			node.bounds.minAABB = { FLT_MAX, FLT_MAX, FLT_MAX };
-			node.bounds.maxAABB = { FLT_MIN, FLT_MIN, FLT_MIN };
-
-			for (uint32_t first = node.firstPrim, i = 0; i < node.primCount; ++i) {
-				Triangle* leafTri = tris[first + i];
-
-				node.bounds.minAABB = Vector3::Min(node.bounds.minAABB, leafTri->v0);
-				node.bounds.minAABB = Vector3::Min(node.bounds.minAABB, leafTri->v1);
-				node.bounds.minAABB = Vector3::Min(node.bounds.minAABB, leafTri->v2);
-				node.bounds.maxAABB = Vector3::Max(node.bounds.maxAABB, leafTri->v0);
-				node.bounds.maxAABB = Vector3::Max(node.bounds.maxAABB, leafTri->v1);
-				node.bounds.maxAABB = Vector3::Max(node.bounds.maxAABB, leafTri->v2);
-			}
-		}
-
-
 		void GenerateAABB(AABB& aabb, std::vector<Vector3> positions) 
 		{
 			if (positions.size() > 0)
@@ -434,6 +321,8 @@ namespace dae
 				}
 			}
 		}
+
+
 
 		void Translate(const Vector3& translation)
 		{
@@ -488,7 +377,6 @@ namespace dae
 			
 		}
 
-
 		void UpdateTransforms()
 		{
 			//Calculate Final Transform 
@@ -515,9 +403,7 @@ namespace dae
 			}
 
 			UpdateTransformedAABB(finalTransform);
-
 		}
-
 
 		void UpdateAABB()
 		{

@@ -37,7 +37,6 @@ namespace dae
 		float lastPitch{totalPitch};
 		float lastYaw{totalYaw};
 		Vector3 lastOrigin{};
-		//bool isUpdated{ false };
 		
 
 

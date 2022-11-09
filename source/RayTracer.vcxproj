@@ -78,6 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BRDFs.h" />
+    <ClInclude Include="BVH.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="ColorRGB.h" />
     <ClInclude Include="DataTypes.h" />
@@ -93,7 +94,7 @@
     <ClInclude Include="Vector4.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DataTypes.cpp" />
+    <ClCompile Include="BVH.cpp" />
     <ClCompile Include="Matrix.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Scene.cpp" />
