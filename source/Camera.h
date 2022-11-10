@@ -77,12 +77,11 @@ namespace dae
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			if (mouseState & SDL_BUTTON(1))
+			if (mouseState & SDL_BUTTON_LMASK)
 			{
-				if (mouseState & SDL_BUTTON(3))
+				if (mouseState & SDL_BUTTON_RMASK)
 				{
-					origin -= mouseY * constSpeed * forward;
-					origin += mouseX * constSpeed * right;
+					origin -= mouseY * constSpeed * up;
 				}
 				else
 				{
@@ -90,13 +89,12 @@ namespace dae
 					totalYaw += mouseX * constSpeed;
 				}
 			}
-
-
-			if (mouseState & SDL_BUTTON(3))
+			else if (mouseState & SDL_BUTTON_RMASK) 
 			{
 				totalPitch -= mouseY * constSpeed;
 				totalYaw += mouseX * constSpeed;
 			}
+
 
 
 			Matrix finalRotation{ Matrix::CreateRotation(totalPitch, totalYaw, 0) };
